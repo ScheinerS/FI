@@ -51,4 +51,3 @@ plt.plot(z,solution_2[2], label='z')
 plt.legend()
 plt.grid()
 plt.savefig('solution_2.png')
-
