@@ -37,7 +37,7 @@ force_F_prime = 1
 if force_F_prime:
     F_prime = np.zeros((d, d))
     k = 2   # place in the diagonal
-    F_prime[k, k] = 1
+    F_prime[k, k] = 10
     F = np.matmul(Mt, np.matmul(F_prime, M)) # Mt*F_prime*M 
 else:
     F = np.ones((d, d))
