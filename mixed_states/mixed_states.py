@@ -22,11 +22,11 @@ plt.rcParams.update({
 
 plt.close('all')
 
-n_qubits = 4
+n_qubits = 3
 state = 'GHZ'
 # states = ['GHZ', 'W']
 
-n = 50
+n = 10
 n_alpha = 10
 
 PRINT_STATES = 0
@@ -58,7 +58,7 @@ def density_matrix(state, n_qubits, n_ones=0):
         # n_ones = 1
         n_zeros = n_qubits - n_ones
         
-        bits = set([''.join(x) for x in itertools.permutations(n_ones * '1' + n_zeros * '0', 4)])
+        bits = set([''.join(x) for x in itertools.permutations(n_ones * '1' + n_zeros * '0', n_qubits)])
         
         coefficients = np.zeros(2**n_qubits)
         options = []
@@ -66,7 +66,7 @@ def density_matrix(state, n_qubits, n_ones=0):
             options.append(int(b, base=2))
         i = np.random.choice(options)
         coefficients[i] = 1
-    
+    ''' 
     elif state=='bitflip_1':
         coefficients = np.zeros(2**n_qubits)
         # i = np.random.randint(1, 2**n_qubits-1)
@@ -85,7 +85,7 @@ def density_matrix(state, n_qubits, n_ones=0):
         i = np.random.choice([7, 11, 13, 14])
         coefficients[i] = 1
         # coefficients = coefficients/np.linalg.norm(coefficients)
-    
+    '''
     if PRINT_STATES:
         print_state(state, coefficients)
     
@@ -204,6 +204,8 @@ for noise_type in noise_types:
                 data.at[l+1, 'p_' + '_' + noise_type] = p
     else:
         for n_ones in range(1, n_qubits):
+            if PRINT_STATES:
+                print(50*'-')
             print(noise_type, n_ones, 'ones')
             for alpha in a:
                 for i in range(n):
