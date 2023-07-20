@@ -27,7 +27,7 @@ state = 'GHZ'
 # states = ['GHZ', 'W']
 
 n = 50
-n_alpha = 50
+n_alpha = 10
 
 PRINT_STATES = 0
 PRINT_F = 0
@@ -35,7 +35,7 @@ PRINT_F = 0
 aux.check_dir(state)
 
 #%%
-def density_matrix(state, n_qubits):
+def density_matrix(state, n_qubits, n_ones=0):
     if state=='GHZ':
         coefficients = np.zeros(2**n_qubits)
         coefficients[0] = coefficients[-1] = 1
@@ -53,10 +53,36 @@ def density_matrix(state, n_qubits):
         coefficients = np.random.rand(2**n_qubits)
         coefficients[0] = coefficients[-1] = 0
         coefficients = coefficients/np.linalg.norm(coefficients)
+    
+    elif state=='bitflip':
+        # n_ones = 1
+        n_zeros = n_qubits - n_ones
         
-    elif state=='single_excitations_noise':
+        bits = set([''.join(x) for x in itertools.permutations(n_ones * '1' + n_zeros * '0', 4)])
+        
         coefficients = np.zeros(2**n_qubits)
-        i = np.random.randint(1, 2**n_qubits-1)
+        options = []
+        for b in bits:
+            options.append(int(b, base=2))
+        i = np.random.choice(options)
+        coefficients[i] = 1
+    
+    elif state=='bitflip_1':
+        coefficients = np.zeros(2**n_qubits)
+        # i = np.random.randint(1, 2**n_qubits-1)
+        i = np.random.choice([1, 2, 4, 8])
+        coefficients[i] = 1
+        
+    elif state=='bitflip_2':
+        coefficients = np.zeros(2**n_qubits)
+        # i = np.random.randint(1, 2**n_qubits-1)
+        i = np.random.choice([3, 5, 6, 10, 12])
+        coefficients[i] = 1
+        # coefficients = coefficients/np.linalg.norm(coefficients)
+    elif state=='bitflip_3':
+        coefficients = np.zeros(2**n_qubits)
+        # i = np.random.randint(1, 2**n_qubits-1)
+        i = np.random.choice([7, 11, 13, 14])
         coefficients[i] = 1
         # coefficients = coefficients/np.linalg.norm(coefficients)
     
@@ -75,6 +101,7 @@ def print_state(state, coefficients):
     for c,b in zip(coefficients, basis):
         if c:
             psi = psi + ' + ' + '%.8f'%c + '\t| %s >'%str(b).strip('()') + '\n'
+    # print(20*'=')
     print(state + ':')
     print(psi)
 
@@ -82,7 +109,7 @@ def print_state(state, coefficients):
 
 #%%
 
-def simulate_state(state, alpha, noise_type):
+def simulate_state(state, alpha, noise_type, n_ones_bitflip=0):
     # states = ['GHZ', 'W', 'noise']
     # alpha between 0 and 1.
     
@@ -92,9 +119,8 @@ def simulate_state(state, alpha, noise_type):
     # rho['GHZ'] = density_matrix('GHZ', n_qubits)
     
     rho[state] = density_matrix(state, n_qubits)
-    rho[noise_type] = density_matrix(noise_type, n_qubits)
+    rho[noise_type] = density_matrix(noise_type, n_qubits, n_ones=n_ones_bitflip)
     # rho['single_excitations_noise'] = density_matrix('single_excitations_noise', n_qubits)
-    
     
     
     rho['MIXED'] = alpha * rho[state] + (1-alpha) * rho[noise_type]
@@ -141,10 +167,12 @@ def simulate_state(state, alpha, noise_type):
         print(F)
     return F
 
-
+def privacy(W, F):
+    p = np.trace(np.dot(W, F))/(np.trace(W)*np.trace(F))
+    return p
 #%%
 
-data = pd.DataFrame(columns=['alpha', 'p'])
+data = pd.DataFrame()
 
 w = np.ones(n_qubits) # 2*np.random.rand(d) - np.ones(d)
 
@@ -157,31 +185,48 @@ a = np.linspace(0, 1, num=n_alpha)
 # alpha = 0.5
 
 
-# noise_types = ['GHZ_noise', 'single_excitations_noise']
 # GHZ_noise is noise everywhere except |00...0> and |11...1>
 # single_excitations_noise is one other element of the base (e.g. |1000>)
 
-# noise_types = ['single_excitations_noise']
-noise_types = ['GHZ_noise']
+noise_types = ['GHZ_noise', 'bitflip']
 
 for noise_type in noise_types:
-    for alpha in a:
-        for i in range(n):
-            l = len(data)
-            F = simulate_state(state, alpha, noise_type)
-            data.at[l+1, 'alpha'] = alpha
-            p = np.trace(np.dot(W, F))/(np.trace(F)*np.trace(W))
-            data.at[l+1, 'p'] = p
+    if noise_type=='GHZ_noise':
+        print(noise_type)
+        for alpha in a:
+            for i in range(n):
+                l = len(data)
+                
+                F = simulate_state(state, alpha, noise_type)
+                data.at[l+1, 'alpha'] = alpha
+                
+                p = privacy(W, F)
+                data.at[l+1, 'p_' + '_' + noise_type] = p
+    else:
+        for n_ones in range(1, n_qubits):
+            print(noise_type, n_ones, 'ones')
+            for alpha in a:
+                for i in range(n):
+                    l = len(data)
+                    
+                    F = simulate_state(state, alpha, noise_type, n_ones)
+                    data.at[l+1, 'alpha'] = alpha
+                    
+                    p = privacy(W, F)
+                    data.at[l+1, 'p_' + '_' + noise_type + '_' + str(n_ones) + '_ones'] = p
             
-            # data.append([alpha, p])
 #%%
 
 plt.figure()
-plt.scatter(data['alpha'], data['p'], alpha=0.2)
+
+for c in data.columns[1:]:
+    plt.scatter(data['alpha'], data[c], alpha=0.2, label=c)
+    
 plt.title(r'$\rho = \alpha \rho_{%s} + (1-\alpha) \rho_{noise}$'%state)
 plt.xlabel(r'$\alpha$')
 plt.ylabel(r'$p(\rho)$')
 plt.grid()
+plt.legend()
 # plt.ylim([0, 1])
 plt.show()
-plt.savefig(state + os.sep + '%s_%d_%s.png'%(state, n_qubits, noise_type))
+plt.savefig(state + os.sep + '%s_%d.png'%(state, n_qubits))
