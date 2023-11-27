@@ -11,8 +11,9 @@ import pandas as pd
 import itertools
 import matplotlib.pyplot as plt
 import os
-import aux
 
+import aux
+import plot_matrix as pm
 
 plt.close('all')
 plt.rcParams['text.usetex'] = True
@@ -37,40 +38,46 @@ plt.close('all')
 #%% Parameters
 
 n_qubits = 3
-state = 'GHZ'
-# states = ['GHZ', 'W']
+
+state = '+++'
+# states = ['GHZ', '+++']
 
 n = 1 # number of states to simulate for each combination of eta, etc.
 n_rand_states = 1 # number of random states per value of eta. TODO: adapt for this.
-n_eta = 100
+n_eta = 1
 
-colours = {'H': 'YlOrRd',
-           'L': 'PuBuGn',
+eta_values = np.linspace(1, 1, num=n_eta)
+# eta_values = [0.1]
+
+plots_path = 'plots' + os.sep + 'd=' + str(n_qubits) + os.sep  # all plots will be saved in this directory.
+
+colours = {'H': 'coolwarm',
+           'L': 'coolwarm',
            'rho_re': 'inferno',
            'rho_im': 'cividis',
            'C': 'viridis'}
 
 colourbar_limits = {'H': [-1, 1],
                     'L': [-2, 2],
-                    'rho_re': [None, None],
-                    'rho_im': [None, None],
-                    'C': [0, 1]}
+                    'rho_re': [-1, 1],
+                    'rho_im': [-1, 1],
+                    'C': [-0.5, 1]}
 #%% Flags
 
 flags = {'print_states': 0,
           'plot_states': 0,
           
-          'print_H_and_L': 0,
-          'plot_H_and_L': 0,
-          'save_H_and_L': 0,
+          # 'print_H_and_L': 0,
+          'plot_H_and_L': 1,
+          'save_H_and_L': 1,
           
-          'print_rho': 0,
-          'plot_rho': 0,
-          'save_rho': 0,
+          # 'print_rho': 0,
+          'plot_rho': 1,
+          'save_rho': 1,
           
-          'print_C': 0,
-          'plot_C': 0,
-          'save_C': 0,
+          # 'print_C': 0,
+          'plot_C': 1,
+          'save_C': 1,
           
           'plot_epsilon': 1,
           'save_epsilon': 1,
@@ -82,14 +89,18 @@ def density_matrix(state, n_qubits, n_ones=0):
         coefficients = np.zeros(2**n_qubits)
         coefficients[0] = coefficients[-1] = 1
         coefficients = coefficients/np.linalg.norm(coefficients)
-
+    
+    elif state=='+++':
+        coefficients = np.ones(2**n_qubits)
+        coefficients = coefficients/np.linalg.norm(coefficients)
+        
     elif state=='W':
         coefficients = np.zeros(2**n_qubits)
         for n in range(n_qubits):
-            coefficients[2**n]=1
+            coefficients[2**n] = 1
         coefficients = coefficients/np.linalg.norm(coefficients)
     
-    elif state=='noise':
+    elif state=='random_noise':
         coefficients = 2*np.random.rand(2**n_qubits)-1 + 2*np.random.rand(2**n_qubits)*1j-1j
         coefficients[0] = coefficients[-1] = 0
         coefficients = coefficients/np.linalg.norm(coefficients)
@@ -104,26 +115,7 @@ def density_matrix(state, n_qubits, n_ones=0):
 
 
 
-def plot_matrix(M, title:str='', save:bool=0, save_name:str='M', path:str='M', colour:str='binary', clim:list=[None, None]):
-    
-    fig, ax = plt.subplots()
-    import matplotlib
-    im = ax.imshow(M, cmap=colour, norm=matplotlib.colors.Normalize(vmin=clim[0], vmax=clim[1]))
-    # ax.set_title('Pan on the colorbar to shift the color mapping\n'             'Zoom on the colorbar to scale the color mapping')
-    colourbar = fig.colorbar(im, ax=ax, label='')
-    # cbar = matplotlib.colorbar.ColorbarBase(ax, cmap=cm, norm=mpl.colors.Normalize(vmin=-0.5, vmax=1.5))
-    colourbar.ax.set_ylim(clim)
-    plt.show()
-    
-    # plt.imshow(rho,  cmap='Purples')
-    # plt.colorbar()
-    plt.title(r'%s'%title)
-    # plt.show()
-    if save:
-        # aux.check_dir(str(n_qubits)+'_qubits')
-        aux.check_dir(path)
-        plt.savefig(path + os.sep + save_name + '.pdf')
-        print('Saved:\t', path + os.sep + save_name + '.pdf')
+
 
 
 
@@ -272,27 +264,24 @@ print('rho_depolarisation =\n', rho_depolarisation)
 '''
 #%%
 
-eta_values = np.linspace(0, 1, num=n_eta)
-# eta_values = [0.1]
-
 H, L = H_and_L(n_qubits, print_matrices=False)
 
 if flags['plot_H_and_L']:
     for i in range(len(H)):
-        plot_matrix(H[i],
+        pm.plot_matrix_2d(H[i],
                     save = flags['save_H_and_L'],
                     save_name = 'H_%d'%(i),
-                    path = str(n_qubits) + '_qubits' + os.sep + 'H',
+                    path = plots_path + 'H',
                     colour = colours['H'],
                     clim = colourbar_limits['H']
                     )
 
     for i in L.keys():
         for j in L[i].keys():
-            plot_matrix(L[i][j],
+            pm.plot_matrix_2d(L[i][j],
                         save = flags['save_H_and_L'],
                         save_name = 'L_%d_%d'%(i,j),
-                        path = str(n_qubits) + '_qubits' + os.sep + 'L',
+                        path = plots_path + 'L',
                         colour = colours['L'],
                         clim = colourbar_limits['L'])
 
@@ -310,29 +299,28 @@ for eta in eta_values:
     
     for key in Kraus_operators.keys():
         
-        path = str(n_qubits) + '_qubits' + os.sep + key
+        path = plots_path + key
         
         K = Kraus_operators[key]
-        # l = len(data)
         
         rho = density_matrix(state, n_qubits)
         
         rho_with_noise = rho_after_noise(rho, K)
         
         if flags['plot_rho']:
-            plot_matrix(np.real(rho_with_noise),
+            pm.plot_matrix_2d(np.real(rho_with_noise),
                         title='$\eta=%.2f$ - $Re$'%eta,
                         save=flags['save_rho'],
                         save_name='rho_%.2f_re'%(eta),
-                        path = path + os.sep + 'rho',
+                        path = plots_path + 'rho',
                         colour=colours['rho_re'],
                         clim=colourbar_limits['rho_re']
                         )
-            plot_matrix(np.imag(rho_with_noise),
+            pm.plot_matrix_2d(np.imag(rho_with_noise),
                         title='$\eta=%.2f$ - $Im$'%eta,
                         save=flags['save_rho'],
                         save_name='rho_%.2f_im'%(eta),
-                        path = path + os.sep + 'rho',
+                        path = plots_path + 'rho',
                         colour=colours['rho_im'],
                         clim=colourbar_limits['rho_im']
                         )
@@ -358,23 +346,22 @@ for eta in eta_values:
         if flags['plot_C']:
             for i in C.keys():
                 for j in C[i].keys():
-                    plot_matrix(np.real(C[i][j]),
+                    pm.plot_matrix_2d(np.real(C[i][j]),
                                 title='$\eta=%.2f$ - $Re$'%eta,
                                 save=flags['save_C'],
                                 save_name='C_%d_%d_%.2f_re'%(i,j, eta),
-                                path= path + os.sep + 'C',
+                                path= plots_path + 'C',
                                 colour=colours['C'],
                                 clim=colourbar_limits['C']
                                 )
-                    plot_matrix(np.imag(C[i][j]),
+                    pm.plot_matrix_2d(np.imag(C[i][j]),
                                 title='$\eta=%.2f$ - $Im$'%eta,
                                 save=flags['save_C'],
                                 save_name='C_%d_%d_%.2f_im'%(i,j, eta),
-                                path = path + os.sep + 'C',
+                                path = plots_path + 'C',
                                 colour=colours['C'],
                                 clim=colourbar_limits['C']
                                 )
-    
     plt.close('all')
 
 
@@ -389,6 +376,5 @@ for noise in noise_types:
         plt.grid()
         plt.show()
         if flags['save_epsilon']:
-            path = str(n_qubits) + '_qubits' + os.sep + noise
-            aux.check_dir(path)
-            plt.savefig('epsilon_%s.pdf'%(noise))
+            aux.check_dir(plots_path)
+            plt.savefig(plots_path + 'epsilon_d=%d_%s.pdf'%(n_qubits, noise))
