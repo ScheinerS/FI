@@ -15,6 +15,7 @@ import os
 import aux
 import plot_functions as pf
 import kraus_operators as ko
+import save_results as sr
 
 plt.close('all')
 plt.rcParams['text.usetex'] = True
@@ -43,10 +44,10 @@ d = 3   # Number of qubits.
 state = 'GHZplus'
 # states = ['GHZ', 'plus', 'GHZplus']
 
-n_eta = 3
+n_eta = 50
 eta_values = np.linspace(0, 1, num=n_eta)
 
-n_alpha = 3
+n_alpha = 50
 alpha_values = np.linspace(0, 1, num=n_alpha)
 
 plots_path = 'plots' + os.sep + state + os.sep + 'd=' + str(d) + os.sep  # all plots will be saved in this directory.
@@ -69,15 +70,15 @@ flags = {'print_states': 0,
          'plot_H_and_M': 0,
          'save_H_and_M': 0,
          
-         'plot_rho': 1,
-         'save_rho': 1,
+         'plot_rho': 0,
+         'save_rho': 0,
          'save_rho_csv': 0,
          
          'plot_C': 0,
          'save_C': 0,
          
-         'plot_epsilon': 0,
-         'save_epsilon': 0,
+         'plot_epsilon': 1,
+         'save_epsilon': 1,
          }
 
 #%%
@@ -179,6 +180,9 @@ def trace_norm(m):
     m = np.matrix('1 2 3; 1 1 1; 2 2 2')
     m = np.matrix('1 0 0; 0 1 0; 0 0 1')
     m = np.matrix('0.5 0 0 0.5; 0 0 0 0; 0 0 0 0; 0.5 0 0 0.5')
+
+    m = np.matrix('0.5 0; 0 -0.5')
+    m = np.matrix('-1 0 0; 0 -2 0; 0 0 3')
     '''
     s = sum(np.linalg.svd(m)[1])
     return s
@@ -288,18 +292,24 @@ for alpha in alpha_values:
                 C[i] = {}
             
             norms = []
+            trace_norms = []
             for i in M.keys():
                 for j in M[i].keys():
                     C[i][j] = np.matmul(M[i][j], rho_with_noise) - np.matmul(rho_with_noise, M[i][j])
                     norms.append(np.linalg.norm(C[i][j], 1))
+                    trace_norms.append(trace_norm(C[i][j]))
             
             # print('norms:', norms)
-            epsilon = max(norms)
+            # epsilon = max(norms)
+            epsilon = max(trace_norms)
             
             l = len(data[noise])
             data[noise].at[l, 'alpha'] = alpha
             data[noise].at[l, 'eta'] = eta
             data[noise].at[l, 'epsilon'] = epsilon
+            
+            if flags['save_rho_csv']:
+                sr.save_results(data=data, filename='data_'+state)
             
             if flags['plot_C']:
                 for i in C.keys():
@@ -320,7 +330,7 @@ for alpha in alpha_values:
                                           colour=colours['C'],
                                           clim=colourbar_limits['C']
                                           )
-        # plt.close('all')
+        plt.close('all')
 
 
 #%%
@@ -333,11 +343,11 @@ if flags['plot_epsilon']:
         pf.plot_epsilon(d,
                         data,
                         noise,
-                        plot='3d',
-                        title='',
-                        save=1,
-                        save_name='data',
-                        path=plots_path,
-                        state=state
+                        plot = '3d',
+                        title = '',
+                        save = flags['save_epsilon'],
+                        save_name = 'data',
+                        path = plots_path,
+                        state = state
                         )
         

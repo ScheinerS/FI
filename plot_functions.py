@@ -81,33 +81,90 @@ plot_matrix_3d(m, save=0, colour='binary', clim=[-1, 1])
 
 #%%
 
+import pandas as pd
+
+
+
+
+
+# ax.plot_surface(x,y,z, cmap=plt.cm.coolwarm,
+                       # linewidth=0, antialiased=False)
+#%%
+# surf = ax.plot_trisurf(x, y, z, cmap= plt.cm.coolwarm, linewidth=0.2) 
+
+
+
+
+
+
+
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# ax.set_xlabel('x')
+# ax.set_ylabel('y')
+# ax.set_zlabel('z')
+
+
+
+# #ax.plot_wireframe(cParams, gammas, avg_errors_array)
+# #ax.plot3D(cParams, gammas, avg_errors_array)
+# #ax.scatter3D(cParams, gammas, avg_errors_array, zdir='z',cmap='viridis')
+
+# # df = pd.DataFrame({'x': cParams, 'y': gammas, 'z': avg_errors_array})
+# surf = ax.plot_trisurf(x, y, z, cmap=plt.cm.jet, linewidth=0.1)
+# fig.colorbar(surf, shrink=0.5, aspect=5)    
+# # plt.savefig('./plots/avgErrs_vs_C_andgamma_type_%s.png'%(k))
+# plt.show()
+
+
+
 
 
 
 def plot_epsilon(d:int, data, noise:str, plot:str='3d', title:str='', save:bool=0, save_name:str='m', path:str='m', state:str='STATE'):
     
-
-    plt.figure()
-    plt.scatter(data[noise]['eta'], data[noise]['epsilon'], c=data[noise]['alpha'], alpha = 1, cmap='Blues')
-    plt.colorbar(label=r'$\alpha$')
-    plt.title(r'%s'%noise)
-    plt.xlabel(r'$\eta$')
-    plt.ylabel(r'$\epsilon(\eta)$')
-    plt.grid(alpha=0.5)
-    plt.show()
-    if save:
-        aux.check_dir(path)
-        plt.savefig(path + 'epsilon(eta)_d=%d_%s_%s.pdf'%(d, state, noise))
+    if plot=='2d':
+        plt.figure()
+        plt.scatter(data[noise]['eta'], data[noise]['epsilon'], c=data[noise]['alpha'], alpha = 1, cmap='Blues')
+        plt.colorbar(label=r'$\alpha$')
+        plt.title(r'%s'%noise)
+        plt.xlabel(r'$\eta$')
+        plt.ylabel(r'$\epsilon(\eta)$')
+        plt.grid(alpha=0.5)
+        plt.show()
+        if save:
+            aux.check_dir(path)
+            plt.savefig(path + 'epsilon(eta)_d=%d_%s_%s.pdf'%(d, state, noise))
+            
+            
+        plt.figure()
+        plt.scatter(data[noise]['alpha'], data[noise]['epsilon'], c=data[noise]['eta'], alpha = 1, cmap='Purples')
+        plt.colorbar(label=r'$\eta$')
+        plt.title(r'%s'%noise)
+        plt.xlabel(r'$\alpha$')
+        plt.ylabel(r'$\epsilon(\alpha)$')
+        plt.grid()
+        plt.show()
         
+    elif plot=='3d':
         
-    plt.figure()
-    plt.scatter(data[noise]['alpha'], data[noise]['epsilon'], c=data[noise]['eta'], alpha = 1, cmap='Purples')
-    plt.colorbar(label=r'$\eta$')
-    plt.title(r'%s'%noise)
-    plt.xlabel(r'$\alpha$')
-    plt.ylabel(r'$\epsilon(\alpha)$')
-    plt.grid()
-    plt.show()
+        fig = plt.figure(figsize=(10,8))
+        ax = fig.add_subplot(111, projection='3d')
+        
+        x = np.array(data[noise]['alpha'], dtype='float64')
+        y = np.array(data[noise]['eta'], dtype='float64')
+        z = np.array(data[noise]['epsilon'], dtype='float64')
+        
+        ax.set_xlabel(r'$\alpha$')
+        ax.set_ylabel(r'$\eta$')
+        ax.set_zlabel(r'$\epsilon$')
+        
+        plt.title(r'%s'%noise)
+        
+        ax.plot_trisurf(x, y, z, cmap=plt.cm.jet, linewidth=0.1)
+        # ax.scatter(x, y, z)
+        # ax.plot_trisurf(x,y,z)
+        
     if save:
         aux.check_dir(path)
         plt.savefig(path + 'epsilon(alpha)_d=%d_%s_%s.pdf'%(d, state, noise))
