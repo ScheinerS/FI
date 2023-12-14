@@ -7,6 +7,12 @@ Created on Wed Jun 21 15:24:23 2023
 """
 import os
 import itertools
+import pandas as pd
+from datetime import datetime
+import shutil
+import sys
+
+
 
 def check_dir(path):
     directories = path.split(os.sep)
@@ -19,6 +25,56 @@ def check_dir(path):
             os.mkdir(d)
             print('Created:', d)
 
+
+def get_date():
+    return datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+
+
+def save_parameters(directory):
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    shutil.copy2('parameters.csv', directory + os.sep + 'parameters_' + timestamp + '.csv')
+
+
+
+
+def read_parameters(filename):
+    filename = 'parameters.txt'
+    
+    P = pd.read_csv(filename, delimiter='=', skiprows=0)#.transpose()
+    P['value'] = pd.to_numeric(P['value'], downcast='integer', errors='ignore')
+    
+    parameters = dict(zip(P['parameter'], P['value']))
+    return parameters
+
+
+
+
+def verify_parameters(parameters):
+    print(50*'*')
+    for item in parameters:
+         print(item, '=', parameters[item])
+    print(50*'*')
+
+    X = input('Continue (y/n)?')
+    if X == 'y':
+        return
+    elif X == 'n':
+        sys.exit()
+    else:
+        verify_parameters(parameters)
+
+
+
+
+
+
 if __name__ == '__main__':
-    path = 'a/b/c/d/e'
-    check_dir(path)
+    
+    if False:
+        path = 'a/b/c/d/e'
+        check_dir(path)
+    
+    if True:
+        filename = 'parameters.txt'
+        parameters = read_parameters(filename)
+        verify_parameters(parameters)

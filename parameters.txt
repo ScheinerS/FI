@@ -1,0 +1,13 @@
+parameter=value
+
+d=3
+state=GHZplus
+
+eta_min=0
+eta_max=1
+n_eta=3
+
+alpha_min=0
+alpha_max=1
+n_alpha=5
+
