@@ -18,21 +18,6 @@ import kraus_operators as ko
 import save_results as sr
 
 import plt_parameters
-# plt.close('all')
-# plt.rcParams['text.usetex'] = True
-
-# font = {'family' : 'normal',
-#         'weight' : 'bold',
-#         # 'size'   : 22
-#         }
-
-# plt.rc('font', **font)
-
-# plt.rcParams.update({
-#     "text.usetex": True,
-#     "font.family": "Helvetica",
-#     'font.size': 12
-# })
 
 
 
@@ -180,7 +165,8 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                         save_name = 'H_%d'%(i),
                         path = plots_path + 'H',
                         colour = colours['H'],
-                        clim = colourbar_limits['H']
+                        clim = colourbar_limits['H'],
+                        save_as = 'png'
                         )
     
         for i in M.keys():
@@ -190,7 +176,9 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                             save_name = 'M_%d_%d'%(i,j),
                             path = plots_path + 'M',
                             colour = colours['M'],
-                            clim = colourbar_limits['M'])
+                            clim = colourbar_limits['M'],
+                            save_as = 'png'
+                            )
     
     data = {}
     
@@ -245,7 +233,8 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                                    save_name='rho_eta=%.2f_alpha=%.2f_re'%(eta, alpha),
                                    path = path + 'rho',
                                    colour=colours['rho_re'],
-                                   clim=colourbar_limits['rho_re']
+                                   clim=colourbar_limits['rho_re'],
+                                   save_as = 'png'
                                    )
                     pf.plot_matrix(np.imag(rho_with_noise),
                                    plot='3d',
@@ -254,7 +243,8 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                                    save_name='rho_eta=%.2f_alpha=%.2f_im'%(eta, alpha),
                                    path = path + 'rho',
                                    colour=colours['rho_im'],
-                                   clim=colourbar_limits['rho_im']
+                                   clim=colourbar_limits['rho_im'],
+                                   save_as = 'png'
                                    )
                 
         
@@ -289,7 +279,8 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                                               save_name='C_%d_%d_eta=%.2f_alpha=%.2f_re'%(i, j, eta, alpha),
                                               path = path + 'C',
                                               colour = colours['C'],
-                                              clim = colourbar_limits['C']
+                                              clim = colourbar_limits['C'],
+                                              save_as = 'png'
                                               )
                             pf.plot_matrix(np.imag(C[i][j]),
                                            title='$\eta=%.2f$ - $Im$'%eta,
@@ -297,12 +288,13 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                                            save_name='C_%d_%d_eta=%.2f_alpha=%.2f_im'%(i,j, eta, alpha),
                                            path = path + 'C',
                                            colour=colours['C'],
-                                           clim=colourbar_limits['C']
+                                           clim=colourbar_limits['C'],
+                                           save_as = 'png'
                                            )
             plt.close('all')
     
     if flags['save_results']:
-        sr.save_results(data=data, filename='data_' + state, )
+        sr.save_results(data=data, filename='data_' + state + '_d=' + str(d))
                     
     if flags['plot_epsilon']:
         for noise in noise_types:
@@ -334,9 +326,9 @@ if __name__=='__main__':
     parameters['state'] = 'GHZplus'
     states = ['GHZ', 'plus', 'GHZplus']
     
-    parameters['n_eta'] = 3
     parameters['eta_min'] = 0
     parameters['eta_max'] = 1
+    parameters['n_eta'] = 101
     parameters['eta_values'] = np.linspace(parameters['eta_min'],
                                            parameters['eta_max'],
                                            num = int(parameters['n_eta'])
@@ -344,7 +336,7 @@ if __name__=='__main__':
     
     parameters['alpha_min'] = 0
     parameters['alpha_max'] = 1
-    parameters['n_alpha'] = 3
+    parameters['n_alpha'] = 1
     parameters['alpha_values'] = np.linspace(parameters['alpha_min'],
                                            parameters['alpha_max'],
                                            num = int(parameters['n_alpha'])
@@ -353,39 +345,41 @@ if __name__=='__main__':
     plots_path = 'plots' + os.sep + parameters['state'] + os.sep + 'd=' + str(parameters['d']) + os.sep  # all plots will be saved in this directory.
     
     parameters['colours'] = {'H': 'coolwarm',
-               'M': 'coolwarm',
+               'M': 'PiYG',
                'rho_re': 'inferno_r',
                'rho_im': 'cividis',
                'C': 'viridis'}
     
     parameters['colourbar_limits'] = {'H': [-1, 1],
                                       'M': [-1, 1],
-                                      'rho_re': [-1, 1],
-                                      'rho_im': [-1, 1],
-                                      'C': [-1, 1]}
+                                      'rho_re': [-0.55, 0.55],
+                                      'rho_im': [-0.55, 0.55],
+                                      'C': [-0.55, 0.55]}
     # Flags
     
-    flags = {'save_parameters': 1,
+    flags = {'verify_parameters': 1,
+             'save_parameters': 1,
              
              'print_states': 0,
              
-             'plot_H_and_M': 1,
+             'plot_H_and_M': 0,
              'save_H_and_M': 1,
              
              'plot_rho': 1,
              'save_rho': 1,
-             'save_rho_csv': 0, # rho in TXT
+             'save_rho_csv': 1, # rho in TXT
              
-             'plot_C': 0,
-             'save_C': 0,
+             'plot_C': 1,
+             'save_C': 1,
              
-             'plot_epsilon': 0,
-             'save_epsilon': 0,
+             'plot_epsilon': 1,
+             'save_epsilon': 1,
              
              'save_results': 1, # xlsx
              }
     
-    # aux.verify_parameters(parameters)
+    if flags['verify_parameters']:
+        aux.verify_parameters(parameters)
     
     mixed_states(d = parameters['d'],
                  state = parameters['state'],
