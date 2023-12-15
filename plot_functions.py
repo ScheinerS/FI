@@ -14,7 +14,7 @@ import os
 
 import aux
 
-def plot_matrix(m, plot:str='3d', title:str='', save:bool=0, save_name:str='m', path:str='m', colour:str='binary', clim:list=[0, 0]):
+def plot_matrix(m, plot:str='3d', title:str='', save:bool=0, save_name:str='m', path:str='m', colour:str='binary', clim:list=[0, 0], save_as:str='pdf'):
     
     if plot=='2d':
         fig, ax = plt.subplots()
@@ -53,6 +53,7 @@ def plot_matrix(m, plot:str='3d', title:str='', save:bool=0, save_name:str='m', 
         min_height = m.min()
         max_height = m.max()
         
+        ax.set_zlim(clim[0], clim[1])
         # print(min_height, max_height)
         # min_height = clim[0]
         # max_height = clim[1]
@@ -72,14 +73,15 @@ def plot_matrix(m, plot:str='3d', title:str='', save:bool=0, save_name:str='m', 
                  shade=True
                  )
         
-        plt.show()
+        # plt.show()
     
     if save:
         # aux.check_dir(str(n_qubits)+'_qubits')
         aux.check_dir(path)
-        plt.savefig(path + os.sep + save_name + '.pdf')
+        plt.savefig(path + os.sep + save_name + '.' + save_as)
         # print('\rSaved:\t', path + os.sep + save_name + '.pdf', end='')
-
+    
+    plt.close('all')
 
 
 
