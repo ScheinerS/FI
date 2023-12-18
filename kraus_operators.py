@@ -9,7 +9,12 @@ Created on Fri Dec  1 10:57:34 2023
 import numpy as np
 import itertools
 
+
+
+
+
 def depolarising_Kraus_operators(d, eta, verify:bool=False):
+    # Nielsen & Chuang, page 378.
     '''
     Parameters
     ----------
@@ -53,7 +58,11 @@ def depolarising_Kraus_operators(d, eta, verify:bool=False):
 
 
 
+
+
+
 def amplitude_damping_Kraus_operators(d:int, eta:float, verify:bool=False):
+    # Nielsen & Chuang, page 380.
     '''
     Parameters
     ----------
@@ -70,7 +79,6 @@ def amplitude_damping_Kraus_operators(d:int, eta:float, verify:bool=False):
     -------
     K : TYPE
         List of amplitude damping Kraus operators.
-
     '''
     
     K_A = np.array([[1, 0], [0, np.sqrt(1-eta)]])
@@ -90,6 +98,51 @@ def amplitude_damping_Kraus_operators(d:int, eta:float, verify:bool=False):
         verify_K(K)
     
     return K
+
+
+
+
+
+def phase_damping_Kraus_operators(d:int, eta:float, verify:bool=False):
+    # Nielsen & Chuang, page 383.
+    '''
+    Parameters
+    ----------
+    d : int
+        Number of parameters.
+    eta : float
+        noise parameter:
+            eta=1: pure state and no noise,
+            eta=0: only noise, the state is lost completely.
+    verify : bool, optional
+        Verification for the Kraus operators. The default is False.
+
+    Returns
+    -------
+    K : TYPE
+        List of phase damping Kraus operators.
+    '''
+    
+    K_A = np.array([[1, 0], [0, np.sqrt(1-eta)]])
+    K_B = np.array([[0, 0], [0, np.sqrt(eta)]])
+    
+    lists = list(itertools.product([K_A, K_B], repeat=d))
+    
+    K = {}
+    for i in range(len(lists)):
+        k = np.array([1])
+        for j in range(len(lists[i])):
+            k = np.kron(k, lists[i][j])
+        
+        K[i] = k
+    
+    if verify:
+        verify_K(K)
+    
+    return K
+
+
+
 
 
 
@@ -119,12 +172,13 @@ def verify_K(K:list, d:int, verbose:bool=True):
         s = s + np.matmul(np.conjugate(np.transpose(K[i])), K[i])
         #print(i, s) # to print step by step.
     if verbose:
-        print(50*'-' + '\n', 'Verification:\n', s, '\n', 50*'-')
-        
-    # if s == np.identity(d):
-    #     return True
-    # else:
-    #     return False
+        print('\nVerification:\n', s, '\n', 50*'-')
+
+
+
+
+
+
 
 
 if __name__=='__main__':
@@ -140,3 +194,8 @@ if __name__=='__main__':
     print('Depolarising noise:')    
     K_dep_noise = depolarising_Kraus_operators(d, eta)
     verify_K(K_dep_noise, d, verbose=True)
+    
+    print('Phase damping:')    
+    K_phase_dam = phase_damping_Kraus_operators(d, eta)
+    verify_K(K_phase_dam, d, verbose=True)
+    

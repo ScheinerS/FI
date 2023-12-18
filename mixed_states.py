@@ -187,7 +187,7 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
     data['parameters']['parameter'] = parameters.keys()
     data['parameters']['value'] = parameters.values()
     
-    noise_types = ['Amplitude Damping', 'Depolarising Noise']
+    noise_types = ['Depolarising Noise', 'Amplitude Damping', 'Phase Damping']
     
     for noise in noise_types:
         data[noise] = pd.DataFrame(columns = ['alpha', 'eta', 'epsilon'])
@@ -198,6 +198,7 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
             print('\ralpha:\t%.2f\t\teta:\t%.2f'%(alpha, eta), end='')
             Kraus_operators = {'Amplitude Damping': ko.amplitude_damping_Kraus_operators(d, eta),
                                'Depolarising Noise': ko.depolarising_Kraus_operators(d, eta),
+                               'Phase Damping': ko.phase_damping_Kraus_operators(d, eta),
                                }
             
             for noise in Kraus_operators.keys():
@@ -228,7 +229,7 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                 if flags['plot_rho']:
                     pf.plot_matrix(np.real(rho_with_noise),
                                    plot='3d',
-                                   title=r'$\alpha=%.2f \quad \eta=%.2f$ - $Re$'%(alpha,eta),
+                                   title=r'$Re(\rho) \quad \alpha=%.2f \quad \eta=%.2f$'%(alpha,eta),
                                    save=flags['save_rho'],
                                    save_name='rho_eta=%.2f_alpha=%.2f_re'%(eta, alpha),
                                    path = path + 'rho',
@@ -238,7 +239,7 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                                    )
                     pf.plot_matrix(np.imag(rho_with_noise),
                                    plot='3d',
-                                   title=r'$\alpha=%.2f \quad \eta=%.2f$ - $Im$'%(alpha,eta),
+                                   title=r'$Im(\rho) \quad \alpha=%.2f \quad \eta=%.2f$'%(alpha,eta),
                                    save=flags['save_rho'],
                                    save_name='rho_eta=%.2f_alpha=%.2f_im'%(eta, alpha),
                                    path = path + 'rho',
@@ -372,7 +373,7 @@ if __name__=='__main__':
              'plot_C': 1,
              'save_C': 1,
              
-             'plot_epsilon': 1,
+             'plot_epsilon': 0,
              'save_epsilon': 1,
              
              'save_results': 1, # xlsx

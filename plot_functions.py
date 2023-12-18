@@ -35,7 +35,7 @@ def plot_matrix(m, plot:str='3d', title:str='', save:bool=0, save_name:str='m', 
         
         d = int(np.log2(len(m)))
         
-        fig = plt.figure()
+        fig = plt.figure(figsize=(12,10))
         ax = fig.add_subplot(111, projection='3d')
         # ax = fig.add_subplot(122, projection='3d')
         x = np.array(range(0, 2**d), float)
@@ -73,6 +73,7 @@ def plot_matrix(m, plot:str='3d', title:str='', save:bool=0, save_name:str='m', 
                  shade=True
                  )
         
+        plt.title(r'%s'%title)
         # plt.show()
     
     if save:
