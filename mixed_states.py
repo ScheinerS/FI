@@ -16,6 +16,7 @@ import aux
 import plot_functions as pf
 import kraus_operators as ko
 import save_results as sr
+import animation
 
 import plt_parameters
 
@@ -23,7 +24,14 @@ import plt_parameters
 
 #%%
 def density_matrix(state, d, alpha=0):
-    if state=='GHZ':
+    
+    if state=='GHZplus':
+        rho_GHZ = density_matrix('GHZ', d)
+        rho_plus = density_matrix('plus', d)
+        rho_GHZplus = (1-alpha) * rho_GHZ + alpha * rho_plus
+        return rho_GHZplus
+        
+    elif state=='GHZ':
         coefficients = np.zeros(2**d)
         coefficients[0] = coefficients[-1] = 1
         coefficients = coefficients/np.linalg.norm(coefficients)
@@ -31,7 +39,7 @@ def density_matrix(state, d, alpha=0):
     elif state=='plus':
         coefficients = np.ones(2**d)
         coefficients = coefficients/np.linalg.norm(coefficients)
-  
+    
     elif state=='W':
         coefficients = np.zeros(2**d)
         for n in range(d):
@@ -43,8 +51,8 @@ def density_matrix(state, d, alpha=0):
         coefficients[0] = coefficients[-1] = 0
         coefficients = coefficients/np.linalg.norm(coefficients)
         
-    if flags['print_states']:
-        print_state(state,d, coefficients)
+    # if flags['print_states']:
+    #     print_state(state,d, coefficients)
     
     rho = np.tensordot(np.conj(coefficients), coefficients, axes=0)
     return rho
@@ -153,7 +161,7 @@ def apply_noise(rho, d:int, K:list):
 #%%
 
 
-def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_path:str, colours:dict, colourbar_limits:dict, flags:dict):
+def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_path:str, colours:dict, colourbar_limits:dict, flags:dict, noise_types:list, pause_between_plots:float=0.5):
     
     H, M = H_and_M(d, print_matrices=False)
     
@@ -187,7 +195,7 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
     data['parameters']['parameter'] = parameters.keys()
     data['parameters']['value'] = parameters.values()
     
-    noise_types = ['Depolarising Noise', 'Amplitude Damping', 'Phase Damping']
+    # noise_types = ['Dephasing Noise'] #['Depolarising Noise', 'Amplitude Damping', 'Phase Damping']#, 'Dephasing Noise']
     
     for noise in noise_types:
         data[noise] = pd.DataFrame(columns = ['alpha', 'eta', 'epsilon'])
@@ -199,20 +207,21 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
             Kraus_operators = {'Amplitude Damping': ko.amplitude_damping_Kraus_operators(d, eta),
                                'Depolarising Noise': ko.depolarising_Kraus_operators(d, eta),
                                'Phase Damping': ko.phase_damping_Kraus_operators(d, eta),
+                               'Dephasing Noise': ko.dephasing_Kraus_operators(d, eta),
                                }
             
-            for noise in Kraus_operators.keys():
+            for noise in noise_types:
                 
                 path = plots_path + noise + os.sep
                 
                 K = Kraus_operators[noise]
                 
-                rho_GHZ = density_matrix('GHZ', d)
-                rho_plus = density_matrix('plus', d)
+                # rho_GHZ = density_matrix('GHZ', d)
+                # rho_plus = density_matrix('plus', d)
+                # rho_0 = (1-alpha) * rho_GHZ + alpha * rho_plus
                 
-                rho_0 = (1-alpha) * rho_GHZ + alpha * rho_plus
-    
-                # rho_GHZ = density_matrix(state, d, alpha)
+                rho_0 = density_matrix(state, d, alpha)
+                
                 rho_with_noise = apply_noise(rho_0, d , K)
                 
                 if flags['save_rho_csv']:
@@ -222,16 +231,16 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                                    eta = eta,
                                    alpha = alpha,
                                    filename = 'rho_eta=%.2f_alpha=%.2f'%(eta, alpha),
-                                   path = path + os.sep + 'rho_txt',
+                                   path = path + 'rho_txt',
                                    noise = noise)
                 
                 
                 if flags['plot_rho']:
                     pf.plot_matrix(np.real(rho_with_noise),
-                                   plot='3d',
-                                   title=r'$Re(\rho) \quad \alpha=%.2f \quad \eta=%.2f$'%(alpha,eta),
-                                   save=flags['save_rho'],
-                                   save_name='rho_eta=%.2f_alpha=%.2f_re'%(eta, alpha),
+                                   plot = '3d',
+                                   title = r'%s \quad %s \quad $Re(\rho) \quad \alpha=%.2f \quad \eta=%.2f$'%(state, noise, alpha,eta),
+                                   save = flags['save_rho'],
+                                   save_name='%s_rho_eta=%.2f_alpha=%.2f_re'%(state, eta, alpha),
                                    path = path + 'rho',
                                    colour=colours['rho_re'],
                                    clim=colourbar_limits['rho_re'],
@@ -239,15 +248,15 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                                    )
                     pf.plot_matrix(np.imag(rho_with_noise),
                                    plot='3d',
-                                   title=r'$Im(\rho) \quad \alpha=%.2f \quad \eta=%.2f$'%(alpha,eta),
+                                   title=r'%s \quad %s \quad $Im(\rho) \quad \alpha=%.2f \quad \eta=%.2f$'%(state, noise, alpha,eta),
                                    save=flags['save_rho'],
-                                   save_name='rho_eta=%.2f_alpha=%.2f_im'%(eta, alpha),
+                                   save_name='%s_rho_eta=%.2f_alpha=%.2f_im'%(state, eta, alpha),
                                    path = path + 'rho',
                                    colour=colours['rho_im'],
                                    clim=colourbar_limits['rho_im'],
                                    save_as = 'png'
                                    )
-                
+                    plt.pause(pause_between_plots)
         
                 C = {}
                 for i in range(d-1):
@@ -277,7 +286,7 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                             pf.plot_matrix(np.real(C[i][j]),
                                            title='$\eta=%.2f$ - $Re$'%eta,
                                            save=flags['save_C'],
-                                              save_name='C_%d_%d_eta=%.2f_alpha=%.2f_re'%(i, j, eta, alpha),
+                                              save_name='%s_C_%d_%d_eta=%.2f_alpha=%.2f_re'%(state, i, j, eta, alpha),
                                               path = path + 'C',
                                               colour = colours['C'],
                                               clim = colourbar_limits['C'],
@@ -286,7 +295,7 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                             pf.plot_matrix(np.imag(C[i][j]),
                                            title='$\eta=%.2f$ - $Im$'%eta,
                                            save=flags['save_C'],
-                                           save_name='C_%d_%d_eta=%.2f_alpha=%.2f_im'%(i,j, eta, alpha),
+                                           save_name='%s_C_%d_%d_eta=%.2f_alpha=%.2f_im'%(state, i,j, eta, alpha),
                                            path = path + 'C',
                                            colour=colours['C'],
                                            clim=colourbar_limits['C'],
@@ -302,7 +311,7 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
             pf.plot_epsilon(d,
                             data,
                             noise,
-                            plot = '3d',
+                            plot = '2d',
                             title = '',
                             save = flags['save_epsilon'],
                             save_name = 'data',
@@ -322,26 +331,28 @@ if __name__=='__main__':
     
     parameters['date'] = aux.get_date()
     
-    parameters['d'] = 3   # Number of qubits.
+    parameters['d'] = 4   # Number of qubits.
     
     parameters['state'] = 'GHZplus'
-    states = ['GHZ', 'plus', 'GHZplus']
+    states = ['GHZ', 'plus', 'GHZplus', 'W']
     
     parameters['eta_min'] = 0
     parameters['eta_max'] = 1
     parameters['n_eta'] = 101
     parameters['eta_values'] = np.linspace(parameters['eta_min'],
                                            parameters['eta_max'],
-                                           num = int(parameters['n_eta'])
+                                           num=parameters['n_eta'],
                                            )
     
-    parameters['alpha_min'] = 0
+    parameters['alpha_min'] = 0.5
     parameters['alpha_max'] = 1
     parameters['n_alpha'] = 1
     parameters['alpha_values'] = np.linspace(parameters['alpha_min'],
                                            parameters['alpha_max'],
-                                           num = int(parameters['n_alpha'])
+                                           num=parameters['n_alpha'],
                                            )
+    
+    parameters['noise_types'] = ['Amplitude Damping', 'Depolarising Noise', 'Dephasing Noise', 'Phase Damping']
     
     plots_path = 'plots' + os.sep + parameters['state'] + os.sep + 'd=' + str(parameters['d']) + os.sep  # all plots will be saved in this directory.
     
@@ -370,17 +381,21 @@ if __name__=='__main__':
              'save_rho': 1,
              'save_rho_csv': 1, # rho in TXT
              
-             'plot_C': 1,
+             'plot_C': 0,
              'save_C': 1,
              
              'plot_epsilon': 0,
              'save_epsilon': 1,
              
-             'save_results': 1, # xlsx
+             'save_results': 0, # xlsx
+             
+             'animations': 1,
              }
     
     if flags['verify_parameters']:
         aux.verify_parameters(parameters)
+    
+    
     
     mixed_states(d = parameters['d'],
                  state = parameters['state'],
@@ -390,4 +405,25 @@ if __name__=='__main__':
                  colours = parameters['colours'],
                  colourbar_limits = parameters['colourbar_limits'],
                  flags = flags,
+                 noise_types = parameters['noise_types'],
+                 pause_between_plots=0,
                  )
+    
+    
+
+    variables_animations = ['rho']#, 'C_0_1']
+
+    if flags['animations']:
+        for var in variables_animations:
+            print('\n%s:'%var)
+            for alpha in parameters['alpha_values']:
+                print('alpha=', alpha)
+                animation.animate(state = parameters['state'],
+                                  d = parameters['d'],
+                                  var = var,
+                                  noise_types = parameters['noise_types'],
+                                  FPS = 16,
+                                  initial_seconds = 2,
+                                  final_seconds = 2,
+                                  alpha = alpha,
+                                  )

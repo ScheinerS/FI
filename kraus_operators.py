@@ -61,6 +61,31 @@ def depolarising_Kraus_operators(d, eta, verify:bool=False):
 
 
 
+def dephasing_Kraus_operators(d, eta, verify:bool=False):
+    # Majid
+    
+    K_A = np.sqrt((1-eta)) * np.array([[1, 0], [0, 1]])
+    K_B = np.sqrt(eta) * np.array([[1, 0], [0, -1]])
+    
+    lists = list(itertools.product([K_A, K_B], repeat=d))
+    
+    K = {}
+    for i in range(len(lists)):
+        k = np.array([1])
+        for j in range(len(lists[i])):
+            k = np.kron(k, lists[i][j])
+        
+        K[i] = k
+        
+    if verify:
+        verify_K(K)
+    
+    return K
+
+
+
+
+
 def amplitude_damping_Kraus_operators(d:int, eta:float, verify:bool=False):
     # Nielsen & Chuang, page 380.
     '''
@@ -77,7 +102,7 @@ def amplitude_damping_Kraus_operators(d:int, eta:float, verify:bool=False):
 
     Returns
     -------
-    K : TYPE
+    K : list
         List of amplitude damping Kraus operators.
     '''
     
@@ -119,7 +144,7 @@ def phase_damping_Kraus_operators(d:int, eta:float, verify:bool=False):
 
     Returns
     -------
-    K : TYPE
+    K : list
         List of phase damping Kraus operators.
     '''
     
@@ -199,3 +224,6 @@ if __name__=='__main__':
     K_phase_dam = phase_damping_Kraus_operators(d, eta)
     verify_K(K_phase_dam, d, verbose=True)
     
+    print('Dephasing noise:')    
+    K_deph_noise = dephasing_Kraus_operators(d, eta)
+    verify_K(K_deph_noise, d, verbose=True)
