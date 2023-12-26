@@ -26,6 +26,20 @@ def check_dir(path):
             print('Created:', d)
 
 
+def make_path(L:list):
+    '''
+    Parameters
+    ----------
+    L : list
+        List of strings to join as path.
+
+    Returns
+    -------
+    String to be used as path.
+    '''
+    
+    return os.sep.join(L) + os.sep
+
 def get_date():
     return datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
 
@@ -70,11 +84,15 @@ def verify_parameters(parameters):
 
 if __name__ == '__main__':
     
-    if False:
+    if 1:
+        L = ['a', 'b', 'c']
+        make_path(L)
+    
+    if 0:
         path = 'a/b/c/d/e'
         check_dir(path)
     
-    if True:
+    if 0:
         filename = 'parameters.txt'
         parameters = read_parameters(filename)
         verify_parameters(parameters)
