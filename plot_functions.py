@@ -14,7 +14,35 @@ import os
 
 import aux
 
-def plot_matrix(m, plot:str='3d', title:str='', save:bool=0, save_name:str='m', path:str='m', colour:str='binary', clim:list=[0, 0], save_as:str='pdf'):
+def plot_matrix(m, plot:str='3d', title:str='', save:bool=False, save_name:str='m', path:str='m', colour:str='binary', clim:list=[0, 0], save_as:str='pdf'):
+    '''
+    
+    Parameters
+    ----------
+    m : Numpy array
+        Matrix to plot.
+    plot : str, optional
+        The default is '3d'.
+    title : str, optional
+        Title for the plots. The default is ''.
+    save : bool, optional
+        The default is False.
+    save_name : str, optional
+        Name for each file. The default is 'm'.
+    path : str, optional
+        Directory for the files. The default is 'm'.
+    colour : str, optional
+        Name of the Matplotlib colourmap. The default is 'binary'.
+    clim : list, optional
+        Limits for the colourmap and the z axis. The default is [0, 0].
+    save_as : str, optional
+        Format for the images. The default is 'pdf'.
+
+    Returns
+    -------
+    None.
+
+    '''
     
     if plot=='2d':
         fig, ax = plt.subplots()

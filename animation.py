@@ -45,7 +45,10 @@ def animate(state:str, d:int, var:str, noise_types:list, FPS:int=16, initial_sec
                      # 'ffmpeg_params': ['-s','600x450']
                      }
             # imageio.mimsave(gifOutputPath, images, 'FFMPEG', **kargs)
-            iio.imwrite(path + os.sep + '%s_%s_d=%d_alpha=%.2f_%s.mp4'%(var, component, d, alpha, noise), images, **kargs)
+            if alpha==None:
+                iio.imwrite(path + os.sep + '%s_%s_d=%d_%s.mp4'%(var, component, d, noise), images, **kargs)
+            else:
+                iio.imwrite(path + os.sep + '%s_%s_d=%d_alpha=%.2f_%s.mp4'%(var, component, d, alpha, noise), images, **kargs)
 
 
 
