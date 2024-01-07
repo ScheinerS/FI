@@ -78,10 +78,23 @@ def print_state(state, d, coefficients):
 
 #%%
 
-def H_and_M(d, print_matrices:bool=False):
+def H_and_M(d, operator='sigma_z', print_matrices:bool=False):
     
+    sigma_x = np.array([[0, 1],[1, 0]])
+    sigma_y = np.array([[0, -1j],[1j, 0]])
     sigma_z = np.diag([1, -1])
     id_2 = np.diag([1, 1])
+    
+    if operator=='sigma_z':
+        OP = sigma_z/2
+    elif operator=='hadamard':
+        OP = sigma_z/2 + sigma_x/2
+    elif operator=='sigma_x':
+         OP = sigma_x/2
+    else:
+        print('Operator not yet implemented in function "H_and_M".')
+        from sys import exit
+        exit()
     
     # Operators:
     H = {}
@@ -89,7 +102,7 @@ def H_and_M(d, print_matrices:bool=False):
         H[i] = np.ones((1,1))
         for j in range(d):
             if i==j:
-                H[i] = np.kron(H[i], sigma_z/2)
+                H[i] = np.kron(H[i], OP)
             else:
                 H[i] = np.kron(H[i], id_2)
     
@@ -161,21 +174,21 @@ def apply_noise(rho, d:int, K:list):
 #%%
 
 
-def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_path:str, colours:dict, colourbar_limits:dict, flags:dict, noise_types:list, pause_between_plots:float=0.5):
+def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_path:str, colours:dict, colourbar_limits:dict, flags:dict, noise_types:list, pause_between_plots:float=0.5, H_operator='sigma_z'):
     
-    H, M = H_and_M(d, print_matrices=False)
+    H, M = H_and_M(d, operator=H_operator, print_matrices=False)
     
     if flags['plot_H_and_M']:
         for i in range(len(H)):
             pf.plot_matrix(H[i],
                            plot='3d',
-                        save = flags['save_H_and_M'],
-                        save_name = 'H_%d'%(i),
-                        path = plots_path + 'H',
-                        colour = colours['H'],
-                        clim = colourbar_limits['H'],
-                        save_as = 'png'
-                        )
+                           save = flags['save_H_and_M'],
+                           save_name = 'H_%d'%(i),
+                           path = plots_path + 'H',
+                           colour = colours['H'],
+                           clim = colourbar_limits['H'],
+                           save_as = 'png'
+                           )
     
         for i in M.keys():
             for j in M[i].keys():
@@ -329,23 +342,25 @@ if __name__=='__main__':
     # Parameters
     parameters = {}
     
+    parameters['label'] = 'H=Hadamard'
+    
     parameters['date'] = aux.get_date()
     
-    parameters['d'] = 4   # Number of qubits.
+    parameters['d'] = 3   # Number of qubits.
     
-    parameters['state'] = 'GHZplus'
+    parameters['state'] = 'random_noise'
     states = ['GHZ', 'plus', 'GHZplus', 'W']
     
     parameters['eta_min'] = 0
     parameters['eta_max'] = 1
-    parameters['n_eta'] = 101
+    parameters['n_eta'] = 1
     parameters['eta_values'] = np.linspace(parameters['eta_min'],
                                            parameters['eta_max'],
                                            num=parameters['n_eta'],
                                            )
     
-    parameters['alpha_min'] = 0.5
-    parameters['alpha_max'] = 1
+    parameters['alpha_min'] = 0
+    parameters['alpha_max'] = 0
     parameters['n_alpha'] = 1
     parameters['alpha_values'] = np.linspace(parameters['alpha_min'],
                                            parameters['alpha_max'],
@@ -355,6 +370,7 @@ if __name__=='__main__':
     parameters['noise_types'] = ['Amplitude Damping', 'Depolarising Noise', 'Dephasing Noise', 'Phase Damping']
     
     plots_path = 'plots' + os.sep + parameters['state'] + os.sep + 'd=' + str(parameters['d']) + os.sep  # all plots will be saved in this directory.
+    plots_path = aux.make_path(['plots', parameters['label'], parameters['state'],'d=%d'%parameters['d']])  # all plots will be saved in this directory.
     
     parameters['colours'] = {'H': 'coolwarm',
                'M': 'PiYG',
@@ -384,12 +400,12 @@ if __name__=='__main__':
              'plot_C': 0,
              'save_C': 1,
              
-             'plot_epsilon': 0,
+             'plot_epsilon': 1,
              'save_epsilon': 1,
              
              'save_results': 0, # xlsx
              
-             'animations': 1,
+             'animations': 0,
              }
     
     if flags['verify_parameters']:
@@ -407,6 +423,7 @@ if __name__=='__main__':
                  flags = flags,
                  noise_types = parameters['noise_types'],
                  pause_between_plots=0,
+                 H_operator='hadamard',
                  )
     
     
