@@ -1,4 +1,4 @@
-import sys
+# import sys
 import os
 import glob
 import imageio.v3 as iio
@@ -9,15 +9,15 @@ import aux
 
 
 
-def animate(state:str, d:int, var:str, noise_types:list, FPS:int=16, initial_seconds:int=2, final_seconds:int=2, verbose:bool=True, alpha:float=0):
+def animate(label:str, state:str, d:int, var:str, noise_types:list, FPS:int=16, initial_seconds:int=2, final_seconds:int=2, verbose:bool=True, alpha:float=0):
     if verbose:
         print('Animation:\t\tstate=%s\td=%d\tvar=%s'%(state, d, var))
     for noise in noise_types:
         print(noise)
         files = {}
         files[noise] = {}
-        files[noise]['real'] = glob.glob('plots' + os.sep + state + os.sep + 'd=' + str(d) + os.sep + noise + os.sep + var + os.sep + '*alpha=%.2f_re.png'%alpha)
-        files[noise]['imag'] = glob.glob('plots' + os.sep + state + os.sep + 'd=' + str(d) + os.sep + noise + os.sep + var + os.sep + '*alpha=%.2f_im.png'%alpha)
+        files[noise]['real'] = glob.glob('plots' + os.sep + label + os.sep + state + os.sep + 'd=' + str(d) + os.sep + noise + os.sep + var + os.sep + '*alpha=%.2f_re.png'%alpha)
+        files[noise]['imag'] = glob.glob('plots' + os.sep + label + os.sep + state + os.sep + 'd=' + str(d) + os.sep + noise + os.sep + var + os.sep + '*alpha=%.2f_im.png'%alpha)
         
         for component in files[noise].keys():
             files[noise][component] = sorted(files[noise][component])
@@ -54,9 +54,10 @@ def animate(state:str, d:int, var:str, noise_types:list, FPS:int=16, initial_sec
 
 if __name__=='__main__':
     
-    state = 'GHZplus'
+    label = 'H=sigma_z'
+    state = 'bundle_4_2'
     noise_types = ['Amplitude Damping', 'Depolarising Noise', 'Dephasing Noise']#['Phase Damping'] 
-    d = 2
+    d = 4
     variables = ['rho']#, 'C_0_1']
     alpha = 0
     FPS = 16
@@ -67,7 +68,8 @@ if __name__=='__main__':
     print('\nalpha=%.2f:'%alpha)
     for var in variables:
         print('\n%s:'%var)
-        animate(state = state,
+        animate(label = label,
+                state = state,
                 d = d,
                 var = var,
                 noise_types = noise_types,

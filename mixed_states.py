@@ -23,7 +23,7 @@ import plt_parameters
 
 
 #%%
-def density_matrix(state, d, alpha=0):
+def density_matrix(state, d, alpha=0, dicke_n_ones=0):
     
     if state=='GHZplus':
         rho_GHZ = density_matrix('GHZ', d)
@@ -37,7 +37,23 @@ def density_matrix(state, d, alpha=0):
         coefficients = coefficients/np.linalg.norm(coefficients)
     
     elif state=='plus':
+        # |+++>
         coefficients = np.ones(2**d)
+        coefficients = coefficients/np.linalg.norm(coefficients)
+    
+    elif state=='minus':
+        # |--->
+        coefficients = np.ones(2**d)
+        for i in range(2**d):
+            coefficients[i] = (-1)**(i.bit_count())
+        coefficients = coefficients/np.linalg.norm(coefficients)
+        
+    elif state=='plus_and_minus':
+        coefficients_plus = np.ones(2**d)
+        coefficients_minus = np.ones(2**d)        
+        for i in range(2**d):
+            coefficients_minus[i] = (-1)**(i.bit_count())
+        coefficients = coefficients_plus + coefficients_minus
         coefficients = coefficients/np.linalg.norm(coefficients)
     
     elif state=='W':
@@ -50,16 +66,36 @@ def density_matrix(state, d, alpha=0):
         coefficients = 2*np.random.rand(2**d)-1 + 2*np.random.rand(2**d)*1j-1j
         coefficients[0] = coefficients[-1] = 0
         coefficients = coefficients/np.linalg.norm(coefficients)
+    
+    elif state=='Dicke':
+        coefficients = np.zeros(2**d)
+        for i in range(len(coefficients)):
+            if i.bit_count() == dicke_n_ones:
+                coefficients[i] = 1
+        coefficients = coefficients/np.linalg.norm(coefficients)
         
+    elif state=='bundle_4_2':
+            # bundled graph state with d=4 parameters and n=2 nodes.
+            coefficients = np.ones(2**4)
+            coefficients[5] = coefficients[6] = coefficients[9] = coefficients[10] = -1
+            coefficients = coefficients/np.linalg.norm(coefficients)
+    
+    elif state=='bundle_6_2':
+            # bundled graph state with d=6 parameters and n=2 nodes.
+            coefficients = np.ones(2**6)
+            coefficients[3] = coefficients[6] = coefficients[9] = coefficients[12] = coefficients[18] = coefficients[23] = coefficients[24] = coefficients[29] = coefficients[33] = coefficients[36] = coefficients[43] = coefficients[46] = coefficients[48] = coefficients[53] = coefficients[58] = coefficients[63] = -1
+            coefficients = coefficients/np.linalg.norm(coefficients)
+    elif state=='bundle_6_3':
+            # bundled graph state with d=6 parameters and n=2 nodes.
+            coefficients = np.ones(2**6)
+            coefficients[5] = coefficients[6] = coefficients[9] = coefficients[10] = coefficients[17] = coefficients[18] = coefficients[20] = coefficients[21] = coefficients[22] = coefficients[23] = coefficients[24] = coefficients[25] = coefficients[26] = coefficients[27] = coefficients[29] = coefficients[30] = coefficients[33] = coefficients[34] = coefficients[36] = coefficients[37] = coefficients[38] = coefficients[39] = coefficients[40] = coefficients[41] = coefficients[42] = coefficients[43] = coefficients[45] = coefficients[46] = coefficients[53] = coefficients[54] = coefficients[57] = coefficients[58] = -1
+            coefficients = coefficients/np.linalg.norm(coefficients)
+                
     # if flags['print_states']:
     #     print_state(state,d, coefficients)
     
     rho = np.tensordot(np.conj(coefficients), coefficients, axes=0)
     return rho
-
-
-
-
 
 
 
@@ -81,7 +117,7 @@ def print_state(state, d, coefficients):
 def H_and_M(d, operator='sigma_z', print_matrices:bool=False):
     
     sigma_x = np.array([[0, 1],[1, 0]])
-    sigma_y = np.array([[0, -1j],[1j, 0]])
+    # sigma_y = np.array([[0, -1j],[1j, 0]])
     sigma_z = np.diag([1, -1])
     id_2 = np.diag([1, 1])
     
@@ -174,7 +210,7 @@ def apply_noise(rho, d:int, K:list):
 #%%
 
 
-def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_path:str, colours:dict, colourbar_limits:dict, flags:dict, noise_types:list, pause_between_plots:float=0.5, H_operator='sigma_z'):
+def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_path:str, colours:dict, colourbar_limits:dict, flags:dict, noise_types:list, pause_between_plots:float=0.0, H_operator='sigma_z', dicke_n_ones=0):
     
     H, M = H_and_M(d, operator=H_operator, print_matrices=False)
     
@@ -233,9 +269,9 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                 # rho_plus = density_matrix('plus', d)
                 # rho_0 = (1-alpha) * rho_GHZ + alpha * rho_plus
                 
-                rho_0 = density_matrix(state, d, alpha)
+                rho_0 = density_matrix(state, d, alpha, dicke_n_ones=dicke_n_ones)
                 
-                rho_with_noise = apply_noise(rho_0, d , K)
+                rho_with_noise = apply_noise(rho_0, d, K)
                 
                 if flags['save_rho_csv']:
                     aux.check_dir(plots_path)
@@ -317,7 +353,7 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
             plt.close('all')
     
     if flags['save_results']:
-        sr.save_results(data=data, filename='data_' + state + '_d=' + str(d))
+        sr.save_results(data=data, filename = plots_path + 'data_' + state + '_d=' + str(d))
                     
     if flags['plot_epsilon']:
         for noise in noise_types:
@@ -331,29 +367,31 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                             path = plots_path,
                             state = state
                             )
-        
-#%%
+
+
+
+
 
 if __name__=='__main__':
     
     # parameters = aux.read_parameters('parameters.txt')
-    # TODO: read parameters from file.
 
     # Parameters
     parameters = {}
     
-    parameters['label'] = 'H=Hadamard'
+    H_operator = 'sigma_z'
+    parameters['label'] = 'H=%s'%H_operator
     
     parameters['date'] = aux.get_date()
     
-    parameters['d'] = 3   # Number of qubits.
+    parameters['d'] = 6
     
-    parameters['state'] = 'random_noise'
-    states = ['GHZ', 'plus', 'GHZplus', 'W']
+    parameters['state'] = 'bundle_6_3'
+    states = ['GHZ', 'plus', 'minus', 'plus_and_minus', 'GHZplus', 'W', 'Dicke', 'bundle_4_2', 'bundle_6_2']
     
-    parameters['eta_min'] = 0
+    parameters['eta_min'] = 0.5
     parameters['eta_max'] = 1
-    parameters['n_eta'] = 1
+    parameters['n_eta'] = 51
     parameters['eta_values'] = np.linspace(parameters['eta_min'],
                                            parameters['eta_max'],
                                            num=parameters['n_eta'],
@@ -363,14 +401,13 @@ if __name__=='__main__':
     parameters['alpha_max'] = 0
     parameters['n_alpha'] = 1
     parameters['alpha_values'] = np.linspace(parameters['alpha_min'],
-                                           parameters['alpha_max'],
-                                           num=parameters['n_alpha'],
-                                           )
+                                             parameters['alpha_max'],
+                                             num=parameters['n_alpha'],
+                                             )
     
     parameters['noise_types'] = ['Amplitude Damping', 'Depolarising Noise', 'Dephasing Noise', 'Phase Damping']
     
-    plots_path = 'plots' + os.sep + parameters['state'] + os.sep + 'd=' + str(parameters['d']) + os.sep  # all plots will be saved in this directory.
-    plots_path = aux.make_path(['plots', parameters['label'], parameters['state'],'d=%d'%parameters['d']])  # all plots will be saved in this directory.
+    plots_path = aux.make_path(['plots', parameters['label'], parameters['state'],'d=%d'%parameters['d']])
     
     parameters['colours'] = {'H': 'coolwarm',
                'M': 'PiYG',
@@ -403,29 +440,49 @@ if __name__=='__main__':
              'plot_epsilon': 1,
              'save_epsilon': 1,
              
-             'save_results': 0, # xlsx
+             'save_results': 1, # xlsx
              
-             'animations': 0,
+             'animations': 1,
              }
     
     if flags['verify_parameters']:
         aux.verify_parameters(parameters)
     
     
+    if parameters['state'] == 'Dicke':
+        dicke_n_ones = list(range(parameters['d']))
+    else:
+        dicke_n_ones = [0]
     
-    mixed_states(d = parameters['d'],
-                 state = parameters['state'],
-                 eta_values = parameters['eta_values'],
-                 alpha_values = parameters['alpha_values'],
-                 plots_path = plots_path,
-                 colours = parameters['colours'],
-                 colourbar_limits = parameters['colourbar_limits'],
-                 flags = flags,
-                 noise_types = parameters['noise_types'],
-                 pause_between_plots=0,
-                 H_operator='hadamard',
-                 )
-    
+    for n_ones in dicke_n_ones:
+        if parameters['state'] == 'Dicke':
+            mixed_states(d = parameters['d'],
+                         state = parameters['state'],
+                         eta_values = parameters['eta_values'],
+                         alpha_values = parameters['alpha_values'],
+                         plots_path = plots_path + 'n_ones=%d/'%n_ones,
+                         colours = parameters['colours'],
+                         colourbar_limits = parameters['colourbar_limits'],
+                         flags = flags,
+                         noise_types = parameters['noise_types'],
+                         pause_between_plots = 0,
+                         H_operator = H_operator,
+                         dicke_n_ones = n_ones
+                         )
+        else:
+            mixed_states(d = parameters['d'],
+                         state = parameters['state'],
+                         eta_values = parameters['eta_values'],
+                         alpha_values = parameters['alpha_values'],
+                         plots_path = plots_path,
+                         colours = parameters['colours'],
+                         colourbar_limits = parameters['colourbar_limits'],
+                         flags = flags,
+                         noise_types = parameters['noise_types'],
+                         pause_between_plots = 0,
+                         H_operator = H_operator,
+                         dicke_n_ones = n_ones
+                         )
     
 
     variables_animations = ['rho']#, 'C_0_1']
@@ -435,7 +492,8 @@ if __name__=='__main__':
             print('\n%s:'%var)
             for alpha in parameters['alpha_values']:
                 print('alpha=', alpha)
-                animation.animate(state = parameters['state'],
+                animation.animate(label = parameters['label'],
+                                  state = parameters['state'],
                                   d = parameters['d'],
                                   var = var,
                                   noise_types = parameters['noise_types'],
