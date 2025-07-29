@@ -333,7 +333,7 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                     for i in C.keys():
                         for j in C[i].keys():
                             pf.plot_matrix(np.real(C[i][j]),
-                                           title='$\eta=%.2f$ - $Re$'%eta,
+                                           title=r'$\eta=%.2f$ - $Re$'%eta,
                                            save=flags['save_C'],
                                               save_name='%s_C_%d_%d_eta=%.2f_alpha=%.2f_re'%(state, i, j, eta, alpha),
                                               path = path + 'C',
@@ -342,7 +342,7 @@ def mixed_states(d:int, state:str, eta_values:list, alpha_values:list, plots_pat
                                               save_as = 'png'
                                               )
                             pf.plot_matrix(np.imag(C[i][j]),
-                                           title='$\eta=%.2f$ - $Im$'%eta,
+                                           title=r'$\eta=%.2f$ - $Im$'%eta,
                                            save=flags['save_C'],
                                            save_name='%s_C_%d_%d_eta=%.2f_alpha=%.2f_im'%(state, i,j, eta, alpha),
                                            path = path + 'C',
@@ -384,14 +384,15 @@ if __name__=='__main__':
     
     parameters['date'] = aux.get_date()
     
-    parameters['d'] = 6
+    parameters['d'] = 3
     
-    parameters['state'] = 'bundle_6_3'
-    states = ['GHZ', 'plus', 'minus', 'plus_and_minus', 'GHZplus', 'W', 'Dicke', 'bundle_4_2', 'bundle_6_2']
+    # TODO: adapt to all states in 'states'.
+    parameters['state'] = 'GHZ'
+    states = ['GHZ', 'plus']#, 'minus', 'plus_and_minus', 'GHZplus', 'W', 'Dicke', 'bundle_4_2', 'bundle_6_2']
     
-    parameters['eta_min'] = 0.5
+    parameters['eta_min'] = 0
     parameters['eta_max'] = 1
-    parameters['n_eta'] = 51
+    parameters['n_eta'] = 11
     parameters['eta_values'] = np.linspace(parameters['eta_min'],
                                            parameters['eta_max'],
                                            num=parameters['n_eta'],
@@ -422,8 +423,8 @@ if __name__=='__main__':
                                       'C': [-0.55, 0.55]}
     # Flags
     
-    flags = {'verify_parameters': 1,
-             'save_parameters': 1,
+    flags = {'verify_parameters': 0,
+             'save_parameters': 0,
              
              'print_states': 0,
              
@@ -440,9 +441,9 @@ if __name__=='__main__':
              'plot_epsilon': 1,
              'save_epsilon': 1,
              
-             'save_results': 1, # xlsx
+             'save_results': 0, # xlsx
              
-             'animations': 1,
+             'animations': 0,
              }
     
     if flags['verify_parameters']:
